@@ -3,11 +3,12 @@
 
   <UserPostalInput @submitPostalEvent="getZipCodeData"/>
   <p v-if="error">{{ error }}</p>
-  <div class="flex flex-col mt-2 content-center items-center" v-if="showLocationInfo">
+  <div class="flex flex-col mt-2 content-center items-center" v-if="isShowedLocationInfo">
     <InfoComponent :data="requestedLocationData" :title="`Location info`"/>
     <div class="flex">
       <GenericButton @click="getUserIpInfo">{{ toggleUserInfoButtonTitle }}</GenericButton>
       <GenericButton @click="resetData">Reset</GenericButton>
+
     </div>
     <InfoComponent :data="userInfo" :title="`User info`" v-if="isShowedUserInfo"/>
 
@@ -15,10 +16,10 @@
 </template>
 
 <script>
-import UserPostalInput from './components/UserPostalInput.vue';
+import UserPostalInput from './components/UserZipCodeInput.vue';
 import InfoComponent from './components/InfoComponent.vue';
 import GenericButton from './components/GenericButton.vue';
-import { getZipCodeInfo, getIpInfo } from './services/getDataService';
+import { getZipCodeInfo, getIpInfo, getUTMTags } from './services/getDataService';
 
 export default {
   name: 'App',
@@ -29,9 +30,10 @@ export default {
   },
   data() {
     return {
-      requestedLocationData: {},
-      userInfo: {},
-      showLocationInfo: false,
+      zip: '',
+      requestedLocationData: null,
+      userInfo: null,
+      isShowedLocationInfo: false,
       isShowedUserInfo: false,
       error: null,
     };
@@ -45,30 +47,42 @@ export default {
   methods: {
     resetData() {
       this.requestedLocationData = null;
-      this.showLocationInfo = false;
+      this.isShowedLocationInfo = false;
     },
     getUserIpInfo() {
       this.getIpData();
       this.isShowedUserInfo = !this.isShowedUserInfo;
     },
     async getZipCodeData(code) {
+      if (this.zip === code) {
+        return;
+      }
+
+      this.zip = code;
+      this.requestedLocationData = null;
       this.error = null;
-      const result = await getZipCodeInfo(code);
+      const result = await getZipCodeInfo(this.zip);
       if (result.error) {
         this.error = result.message;
       } else {
-        this.requestedLocationData = result;
-        this.showLocationInfo = true;
+        this.requestedLocationData = { ...result };
+        this.isShowedLocationInfo = true;
       }
     },
     async getIpData() {
       this.error = null;
-      const result = await getIpInfo();
+      const ipInfo = await getIpInfo();
 
-      if (result.error) {
-        this.error = result.message;
+      if (ipInfo.error) {
+        this.error = ipInfo.message;
+      } else {
+        const utmTags = getUTMTags();
+        if (utmTags) {
+          this.userInfo = { ...ipInfo, ...utmTags };
+        } else {
+          this.userInfo = ipInfo;
+        }
       }
-      this.userInfo = { ...result, referrer: document.referrer, userAgent: navigator.userAgent };
     },
   },
 };

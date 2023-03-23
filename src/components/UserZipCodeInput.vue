@@ -6,7 +6,7 @@
         v-model="zipCodeValue"
       >
     </label>
-    <GenericButton @click="submitLocationData">Render location info</GenericButton>
+    <GenericButton @click="submitLocationData">Show location info</GenericButton>
   </div>
 </template>
 
@@ -20,7 +20,7 @@ export default {
   },
   data() {
     return {
-      zipCodeValue: '',
+      zipCodeValue: '95128',
     };
   },
   methods: {
