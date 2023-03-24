@@ -36,7 +36,7 @@ export default {
   components: { InfoComponent, GenericButton },
   data() {
     return {
-      zip: '12345',
+      zip: '',
       requestedLocationData: null,
       userInfo: null,
       isShowLocationInfo: false,
