@@ -12,7 +12,7 @@
 
 <script>
 export default {
-  name: 'InfoComponent',
+  name: 'InfoBlock',
   props: ['data', 'title'],
 };
 </script>
