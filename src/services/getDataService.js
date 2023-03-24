@@ -45,7 +45,9 @@ export const getIpInfo = async () => {
     const response = await fetch(GET_IP_URL);
     const ipInfo = await response.json();
 
-    return {
+    const utmTags = getUTMTags();
+
+    const ipInfoResult = {
       ip: ipInfo.ip,
       country: ipInfo.country,
       countryName: ipInfo.country_name,
@@ -55,6 +57,11 @@ export const getIpInfo = async () => {
       referrer: document.referrer,
       userAgent: navigator.userAgent,
     };
+
+    if (utmTags) {
+      return { ...ipInfoResult, ...utmTags };
+    }
+    return ipInfoResult;
   } catch (e) {
     return { message: 'Something went wrong while defining your IP', error: e };
   }

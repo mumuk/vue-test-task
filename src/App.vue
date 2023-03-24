@@ -1,87 +1,92 @@
 <template>
-  <div class="w-40 flex items-center w-[300px]"></div>
+  <div class="flex flex-col items-center">
 
-  <UserPostalInput @submitPostalEvent="getZipCodeData"/>
-  <p v-if="error">{{ error }}</p>
-  <div class="flex flex-col mt-2 content-center items-center" v-if="isShowedLocationInfo">
-    <InfoComponent :data="requestedLocationData" :title="`Location info`"/>
-    <div class="flex">
-      <GenericButton @click="getUserIpInfo">{{ toggleUserInfoButtonTitle }}</GenericButton>
-      <GenericButton @click="resetData">Reset</GenericButton>
+    <label for="zipCodeInout" class="flex flex-col">Enter your zip code
+      <input
+        id="zipCodeInout" type="text" class="border-2 mb-3 text-center"
+        v-model="zip"
+      >
+    </label>
+    <GenericButton @click="getZipCodeData">Show location info</GenericButton>
 
+    <p v-if="error">{{ error }}</p>
+
+    <div class="flex flex-col mt-2 content-center items-center" v-if="isShowLocationInfo">
+
+      <InfoComponent :data="requestedLocationData" :title="`Location info`"/>
+
+      <div class="flex">
+        <GenericButton @click="toggleUserIpInfo">{{ toggleUserInfoButtonTitle }}</GenericButton>
+        <GenericButton @click="resetData">Reset</GenericButton>
+      </div>
+
+      <InfoComponent :data="userInfo" :title="`User info`" v-if="isShowUserInfo"/>
     </div>
-    <InfoComponent :data="userInfo" :title="`User info`" v-if="isShowedUserInfo"/>
 
   </div>
 </template>
 
 <script>
-import UserPostalInput from './components/UserZipCodeInput.vue';
 import InfoComponent from './components/InfoComponent.vue';
 import GenericButton from './components/GenericButton.vue';
-import { getZipCodeInfo, getIpInfo, getUTMTags } from './services/getDataService';
+import { getZipCodeInfo, getIpInfo } from './services/getDataService';
 
 export default {
   name: 'App',
-  components: {
-    UserPostalInput,
-    InfoComponent,
-    GenericButton,
-  },
+  components: { InfoComponent, GenericButton },
   data() {
     return {
-      zip: '',
+      zip: '12345',
       requestedLocationData: null,
       userInfo: null,
-      isShowedLocationInfo: false,
-      isShowedUserInfo: false,
+      isShowLocationInfo: false,
+      isShowUserInfo: false,
       error: null,
     };
   },
   computed: {
     toggleUserInfoButtonTitle() {
-      return this.isShowedUserInfo ? 'Hide user IP info' : 'Show user IP info';
+      return this.isShowUserInfo ? 'Hide user info' : 'Show user info';
     },
   },
 
   methods: {
     resetData() {
-      this.requestedLocationData = null;
-      this.isShowedLocationInfo = false;
-    },
-    getUserIpInfo() {
-      this.getIpData();
-      this.isShowedUserInfo = !this.isShowedUserInfo;
-    },
-    async getZipCodeData(code) {
-      if (this.zip === code) {
-        return;
-      }
-
-      this.zip = code;
-      this.requestedLocationData = null;
+      this.zip = '';
       this.error = null;
-      const result = await getZipCodeInfo(this.zip);
-      if (result.error) {
-        this.error = result.message;
+      this.requestedLocationData = null;
+      this.isShowLocationInfo = false;
+    },
+
+    toggleUserIpInfo() {
+      this.isShowUserInfo = !this.isShowUserInfo;
+      if (!this.isShowUserInfo) {
+        this.error = null;
       } else {
-        this.requestedLocationData = { ...result };
-        this.isShowedLocationInfo = true;
+        this.getIpData();
       }
     },
+
+    async getZipCodeData() {
+      this.error = null;
+
+      const zipInfo = await getZipCodeInfo(this.zip);
+      if (zipInfo.error) {
+        this.error = zipInfo.message;
+      } else {
+        this.requestedLocationData = { ...zipInfo };
+        this.isShowLocationInfo = true;
+      }
+    },
+
     async getIpData() {
       this.error = null;
-      const ipInfo = await getIpInfo();
 
+      const ipInfo = await getIpInfo();
       if (ipInfo.error) {
         this.error = ipInfo.message;
       } else {
-        const utmTags = getUTMTags();
-        if (utmTags) {
-          this.userInfo = { ...ipInfo, ...utmTags };
-        } else {
-          this.userInfo = ipInfo;
-        }
+        this.userInfo = ipInfo;
       }
     },
   },
